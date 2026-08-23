@@ -166,6 +166,78 @@ Hi, how can I help today?
 
 ---
 
+## ⭐ Known Issues
+
+- **Must run Edge in debugging mode**  
+  The extractor connects to Edge using CDP. Normal Edge windows will not work.
+
+- **Must open Copilot inside the debugging window**  
+  The extractor can only see tabs inside the special Edge instance.
+
+- **Multiple Python installations may cause Playwright errors**  
+  If you see `ModuleNotFoundError: No module named 'playwright'`, run the script using the full path to the Python that has Playwright installed.
+
+- **Extraction speed depends on thread length**  
+  Very long conversations may take several minutes to scroll.
+
+---
+
+## ⭐ Troubleshooting
+
+### Playwright not found
+If you see:
+
+```
+ModuleNotFoundError: No module named 'playwright'
+```
+
+Run the script using the Python installation that has Playwright installed:
+
+```powershell
+& "C:\Path\To\Your\Python.exe" export_personal_copilot.py
+```
+
+### Edge command fails in PowerShell
+Use the PowerShell version of the command:
+
+```powershell
+& "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --user-data-dir="C:\edge-debug" --remote-debugging-port=9222
+```
+
+### Extractor cannot find the Copilot tab
+Make sure the Copilot chat is opened **inside the debugging Edge window**, not your normal browser.
+
+---
+
+## ⭐ Success Example
+
+When the extractor finishes, you will see:
+
+```
+Extraction complete.
+TXT saved to: copilot_chat_full.txt
+MD saved to:  copilot_chat_full.md
+```
+
+These files appear in the same folder where you ran the script.
+
+---
+
+## ⭐ Why Edge?
+
+Copilot runs inside Edge’s WebView2 environment and uses Edge‑specific rendering behavior.
+
+Using Edge with CDP ensures:
+
+- stable access to the chat container  
+- consistent DOM structure  
+- predictable hydration behavior  
+- reliable infinite scroll handling  
+
+Chrome or other browsers will not work for Copilot extraction.
+
+---
+
 ## ⭐ License
 
 MIT — free to use, modify, and distribute.
