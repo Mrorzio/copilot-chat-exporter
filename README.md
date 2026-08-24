@@ -184,3 +184,9 @@ your institutional memory
 your long‑term AI workflow
 
 ---
+## Roadmap (v1.2.0)
+- JSON export
+- HTML export
+- Automatic chat title detection for non-share pages
+- Multi-chat batch export
+- GUI wrapper
