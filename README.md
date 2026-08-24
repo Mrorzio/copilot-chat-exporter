@@ -174,8 +174,13 @@ This tool is the missing link between:
 Copilot
 
 your personal knowledge base
+
 your second brain
-your institutional memory
+
 your business brain formation from personal brain
+
+your institutional memory
+
 your long‑term AI workflow
+
 ---
