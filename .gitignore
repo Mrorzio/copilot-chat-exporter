@@ -1,7 +1,5 @@
 __pycache__/
 *.pyc
-edge-debug/
-
-*.txt
 *.log
-edge-debug/
+*.tmp
+playwright/
