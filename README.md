@@ -158,6 +158,26 @@ reliable infinite scroll handling
 
 Chrome or other browsers will not work for Copilot extraction.
 
+⭐ Upcoming Additions
+The following project assets are planned for future releases to improve clarity, onboarding, and long-term maintainability:
+
+📘 Changelog (coming soon)
+A structured version history documenting all changes across releases, including fixes, enhancements, and major updates.
+
+🤝 Contributing Guide (coming soon)
+A clear set of guidelines for contributors, covering development workflow, coding standards, and how to propose improvements.
+
+🧭 Roadmap (coming soon)
+A forward-looking outline of planned features, architectural improvements, and long-term goals for the exporter.
+
+🎨 Project Logo (future release)
+A simple, recognizable visual identity for the repository and documentation.
+
+🧩 Architecture Diagram (future release)
+A visual overview of how the exporter interacts with Edge, CDP, hydration, and the extraction pipeline.
+
+These items will be introduced gradually in upcoming versions (starting with v1.2.0) to keep the project clean, consistent, and easy to navigate.
+
 ⭐ License
 MIT — free to use, modify, and distribute.
 
