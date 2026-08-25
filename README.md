@@ -50,10 +50,12 @@ https://www.python.org/downloads/
 ```bash
 pip install playwright
 playwright install
+
 3. Clone the repo
 bash
 git clone https://github.com/Mrorzio/copilot-chat-exporter.git
 cd copilot-chat-exporter
+
 ⭐ Launch Edge in debugging mode
 PowerShell:
 
@@ -64,16 +66,17 @@ A new Edge window opens.
 ⭐ Open your Copilot chat inside that window
 Example:
 
-Code
+text
 https://copilot.microsoft.com/chats/<your-chat-id>
 You must open the chat inside the debugging Edge window — normal Edge windows are invisible to CDP.
 
 ⭐ Run the extractor
 powershell
 python export_personal_copilot.py
+
 You will see:
 
-Code
+text
 Available tabs:
 [0] https://copilot.microsoft.com/chats/...
 Enter the number of the tab you want to use:
@@ -83,36 +86,30 @@ Pick the correct tab.
 Copilot share pages often hide the real chat title.
 
 The extractor will prompt:
-
-Code
 Detected chat title (may be inaccurate on share pages):
 Enter a custom name for this chat (recommended):
-Enter the name you want your export folder to use.
-
-If you press Enter, the detected title will be used — but this is often inaccurate on share‑links.
 
 ⭐ Output Directory
 All exports are saved to:
-
-Code
 C:\CopilotExports
+
 This avoids OneDrive virtualization issues and ensures files appear immediately.
 
 ⭐ Output Format
 TXT
-Code
 You said
 Hello Copilot
 
 Copilot said
 Hi, how can I help today?
+
 Markdown
-markdown
 ### You
 Hello Copilot
 
 ### Copilot
 Hi, how can I help today?
+
 ⭐ Limitations
 Must run Edge in debugging mode
 
@@ -124,8 +121,9 @@ Manual naming recommended
 
 ⭐ Troubleshooting
 Playwright not found
-Code
+
 ModuleNotFoundError: No module named 'playwright'
+
 Use the Python installation that has Playwright installed.
 
 Extractor cannot find the Copilot tab
@@ -136,9 +134,8 @@ Use the manual naming prompt.
 
 Smart App Control (SAC) blocks DLLs
 If you see:
-
-Code
 ImportError: DLL load failed while importing _greenlet
+
 Disable Smart App Control:
 
 Windows Security → App & Browser Control → Smart App Control → Off
@@ -200,13 +197,9 @@ your institutional memory
 
 your long‑term AI workflow
 
-⭐ Roadmap (v1.2.0)
+⭐ Roadmap (v1.3.0)
 JSON export
-
 HTML export
-
 Automatic chat title detection
-
 Multi-chat batch export
-
 GUI wrapper
