@@ -190,3 +190,158 @@ your long‑term AI workflow
 - Automatic chat title detection for non-share pages
 - Multi-chat batch export
 - GUI wrapper
+
+🔥 Full-Thread Extraction (v1.1.1)
+Copilot conversations often exceed what the browser hydrates by default. Long threads use:
+
+virtualized DOM
+
+lazy hydration
+
+infinite scroll
+
+memory-heavy rendering
+
+Traditional scrapers fail because they try to load the entire conversation at once — causing resets, crashes, or partial exports.
+
+v1.1.1 introduces a robust full-thread scroll loop that reliably extracts complete Copilot conversations.
+
+✔ What’s new
+Bottom-start scroll traversal
+
+Large upward scroll increments
+
+Hydration-change detection
+
+Duplicate message hashing
+
+Stable-pass detection (stops only when the true top is reached)
+
+Full-thread extraction validated on real Copilot chats
+
+Clean multi-file segmentation with Obsidian-ready Markdown
+
+✔ Verified performance
+A real Copilot thread produced:
+
+161 messages extracted
+
+22 chunks written
+
+Complete export
+
+This update resolves the long-standing issue where exports stopped after ~20–30 messages.
+
+⭐ Why This Works
+Copilot’s DOM is virtualized and only hydrates a small portion of the conversation at any given time.
+This extractor:
+
+scrolls the chat container in controlled increments
+
+waits for hydration
+
+extracts only visible messages
+
+streams them directly to disk
+
+never hydrates the full DOM
+
+never accumulates more than a few dozen nodes
+
+This makes it stable for massive conversations.
+
+🛠️ Usage (unchanged, but clarified)
+1. Launch Edge in debugging mode
+powershell
+& "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --user-data-dir="C:\edge-debug" --remote-debugging-port=9222
+2. Open Copilot inside that window
+This is required — normal Edge windows are invisible to CDP.
+
+3. Run the extractor
+powershell
+python export_personal_copilot.py
+4. Select the Copilot tab
+The extractor will list all tabs inside the debugging Edge window.
+
+5. Follow prompts
+You’ll choose:
+
+folder naming mode
+
+chunk size
+
+file prefix
+
+The extractor will:
+
+hydrate the full thread
+
+extract all messages
+
+write chunked .md and .txt files
+
+store everything under:
+
+Code
+C:\CopilotExports
+🧩 Output Format
+Each chunk includes:
+
+Obsidian frontmatter
+
+Dates covered
+
+Source URL
+
+Role headers (### You, ### Copilot)
+
+Wrapped text at 100 characters
+
+Timestamped .txt logs
+
+Files are named:
+
+Code
+01 - PREFIX.md
+02 - PREFIX.md
+...
+Earliest messages appear in the lowest-numbered file.
+
+🛡️ Troubleshooting
+Smart App Control (SAC) blocks Playwright DLLs
+If you see:
+
+Code
+ImportError: DLL load failed while importing _greenlet
+Disable Smart App Control:
+
+Windows Security → App & Browser Control → Smart App Control → Off
+
+Restart your PC.
+
+PythonCore / Microsoft Store Python
+If python resolves to:
+
+Code
+C:\Users\<user>\AppData\Local\Microsoft\WindowsApps\python.exe
+Install Python from python.org and ensure:
+
+“Add Python to PATH”
+
+“Install for all users”
+
+are checked.
+
+Exporter sees only extension tabs
+You must open Copilot inside the debugging Edge window, not your normal browser.
+
+🗺️ Roadmap (v1.2.0)
+JSON export
+
+HTML export
+
+Automatic chat title detection for non-share pages
+
+Multi-chat batch export
+
+GUI wrapper
