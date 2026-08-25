@@ -10,17 +10,17 @@ This tool solves that.
 
 ## ⭐ Features
 
-- **Chunked streaming extraction** — survives multi‑hour scrolls  
-- **Memory‑safe** — never hydrates the full DOM  
-- **Works on extremely long Copilot threads**  
-- **Exports both TXT and Markdown**  
-- **Deduplicates messages automatically**  
-- **Uses Playwright + Edge CDP**  
-- **Tab picker** — choose the exact Copilot tab  
-- Scrolls inside the chat container (not the page)
-- Manual filename override — ensures correct naming even on share‑links 
-- **No crashes, no resets, no lost progress**
-- Stable output directory (C:\CopilotExports)
+- Chunked streaming extraction — survives multi‑hour scrolls  
+- Memory‑safe — never hydrates the full DOM  
+- Works on extremely long Copilot threads  
+- Exports both TXT and Markdown  
+- Deduplicates messages automatically  
+- Uses Playwright + Edge CDP  
+- Tab picker — choose the exact Copilot tab  
+- Scrolls inside the chat container (not the page)  
+- Manual filename override for accurate naming  
+- No crashes, no resets, no lost progress  
+- Stable output directory (`C:\CopilotExports`)
 
 ---
 
@@ -35,7 +35,7 @@ Copilot uses:
 
 Traditional scrapers fail because they try to load the entire conversation at once.
 
-This extractor scrolls the chat in small chunks, extracts only the visible messages, streams them directly to disk, and never allows the browser to accumulate more than a few dozen hydrated nodes.
+This extractor scrolls the chat in controlled increments, extracts only visible messages, streams them directly to disk, and never hydrates the full DOM.
 
 This makes it stable for massive conversations.
 
@@ -57,136 +57,203 @@ playwright install
 git clone https://github.com/Mrorzio/copilot-chat-exporter.git
 cd copilot-chat-exporter
 ```
-⭐ Launch Edge in debugging mode
-PowerShell (single line):
 
-powershell
+---
+
+## ⭐ Launch Edge in debugging mode
+
+PowerShell:
+
+```powershell
 & "C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe" --user-data-dir="C:\edge-debug" --remote-debugging-port=9222
+```
+
 A new Edge window opens.
 
-⭐ Open your Copilot chat inside that window
+---
+
+## ⭐ Open your Copilot chat inside that window
+
 Example:
 
-Code
+```text
 https://copilot.microsoft.com/chats/<your-chat-id>
-You must open the chat inside the debugging Edge window, not your normal browser.
+```
 
-⭐ Run the extractor
-powershell
+You must open the chat inside the debugging Edge window — normal Edge windows are invisible to CDP.
+
+---
+
+## ⭐ Run the extractor
+
+```powershell
 python export_personal_copilot.py
+```
+
 You will see:
 
-Code
+```text
 Available tabs:
 [0] https://copilot.microsoft.com/chats/...
 Enter the number of the tab you want to use:
+```
+
 Pick the correct tab.
 
-⭐ Naming your export files (IMPORTANT)
-Copilot share pages do not expose the real chat title in the DOM.
-Because of this, the extractor always prompts you to enter a custom name:
+---
 
-Code
-Detected chat title (may be inaccurate on share pages): 🔥 Section‑by‑Section Placement of Your Comments
+## ⭐ Naming your export files (IMPORTANT)
+
+Copilot share pages often hide the real chat title.
+
+The extractor will prompt:
+
+```text
+Detected chat title (may be inaccurate on share pages):
 Enter a custom name for this chat (recommended):
-You should enter the name you want:
+```
 
-Code
-TALU PRD To Engineering Comments
-Your files will be saved as:
+Enter the name you want your export folder to use.
 
-Code
-C:\CopilotExports\TALU PRD To Engineering Comments.txt
-C:\CopilotExports\TALU PRD To Engineering Comments.md
 If you press Enter, the detected title will be used — but this is often inaccurate on share‑links.
 
-⭐ Output Directory
+---
+
+## ⭐ Output Directory
+
 All exports are saved to:
 
-Code
+```text
 C:\CopilotExports
-This avoids OneDrive virtualization issues and ensures files are visible immediately.
+```
 
-⭐ Output Format
-TXT
-Code
+This avoids OneDrive virtualization issues and ensures files appear immediately.
+
+---
+
+## ⭐ Output Format
+
+### TXT
+```text
 You said
 Hello Copilot
 
 Copilot said
 Hi, how can I help today?
-Markdown
-markdown
+```
+
+### Markdown
+```markdown
 ### You
 Hello Copilot
 
 ### Copilot
 Hi, how can I help today?
-⭐ Limitations
-Must run Edge in debugging mode
+```
 
-Must manually open Copilot inside that window
+---
 
-Auto‑detected titles are unreliable on share‑links
+## ⭐ Limitations
 
-Manual naming is recommended for every export
+- Must run Edge in debugging mode  
+- Must manually open Copilot inside that window  
+- Auto‑detected titles are unreliable on share‑links  
+- Manual naming recommended  
 
-⭐ Troubleshooting
-Playwright not found
-Code
+---
+
+## ⭐ Troubleshooting
+
+### Playwright not found
+```text
 ModuleNotFoundError: No module named 'playwright'
-Run the script using the Python installation that has Playwright installed.
+```
+Use the Python installation that has Playwright installed.
 
-Extractor cannot find the Copilot tab
-Make sure the chat is opened inside the debugging Edge window.
+### Extractor cannot find the Copilot tab
+Open the chat inside the debugging Edge window.
 
-Wrong filename detected
+### Wrong filename detected
 Use the manual naming prompt.
 
-⭐ Why Edge?
-Copilot runs inside Edge’s WebView2 environment and uses Edge‑specific rendering behavior.
+### Smart App Control (SAC) blocks DLLs
+If you see:
+
+```text
+ImportError: DLL load failed while importing _greenlet
+```
+
+Disable Smart App Control:
+
+**Windows Security → App & Browser Control → Smart App Control → Off**
+
+Restart your PC.
+
+---
+
+## ⭐ Why Edge?
+
+Copilot runs inside Edge’s WebView2 environment.
 
 Using Edge with CDP ensures:
 
-stable access to the chat container
+- stable access to the chat container  
+- consistent DOM structure  
+- predictable hydration behavior  
+- reliable infinite scroll handling  
 
-consistent DOM structure
+Chrome or other browsers will not work.
 
-predictable hydration behavior
+---
 
-reliable infinite scroll handling
+## ⭐ Upcoming Additions
 
-Chrome or other browsers will not work for Copilot extraction.
+These items are planned for future releases:
 
-⭐ License
+- 📘 Changelog  
+- 🤝 Contributing Guide  
+- 🧭 Roadmap  
+- 🎨 Project Logo  
+- 🧩 Architecture Diagram  
+
+These will be introduced gradually starting with v1.2.0.
+
+---
+
+## ⭐ License
+
 MIT — free to use, modify, and distribute.
 
-⭐ Contributions
-Pull requests welcome.
-Issues welcome.
+---
+
+## ⭐ Contributions
+
+Pull requests welcome.  
+Issues welcome.  
 Feature requests welcome.
 
-⭐ Why this exists
+---
+
+## ⭐ Why this exists
+
 Copilot is becoming a second brain for millions of people — but there is no way to export your conversations.
 
 This tool is the missing link between:
 
-Copilot
-
-your personal knowledge base
-
-your second brain
-
-your business brain formation from personal brain
-
-your institutional memory
-
-your long‑term AI workflow
+- Copilot  
+- your personal knowledge base  
+- your second brain  
+- your business brain  
+- your institutional memory  
+- your long‑term AI workflow  
 
 ---
-## Roadmap (v1.2.0)
-- JSON export
-- HTML export
-- Automatic chat title detection for non-share pages
-- Multi-chat batch export
-- GUI wrapper
+
+## ⭐ Roadmap (v1.2.0)
+
+- JSON export  
+- HTML export  
+- Automatic chat title detection  
+- Multi-chat batch export  
+- GUI wrapper  
+```
