@@ -1,3 +1,4 @@
+Code
 # Copilot Chat Exporter
 
 A robust, memory‑safe extractor for long Copilot conversations.
@@ -50,12 +51,10 @@ https://www.python.org/downloads/
 ```bash
 pip install playwright
 playwright install
-
 3. Clone the repo
 bash
 git clone https://github.com/Mrorzio/copilot-chat-exporter.git
 cd copilot-chat-exporter
-
 ⭐ Launch Edge in debugging mode
 PowerShell:
 
@@ -73,7 +72,6 @@ You must open the chat inside the debugging Edge window — normal Edge windows 
 ⭐ Run the extractor
 powershell
 python export_personal_copilot.py
-
 You will see:
 
 text
@@ -86,30 +84,36 @@ Pick the correct tab.
 Copilot share pages often hide the real chat title.
 
 The extractor will prompt:
+
+text
 Detected chat title (may be inaccurate on share pages):
 Enter a custom name for this chat (recommended):
+Enter the name you want your export folder to use.
+
+If you press Enter, the detected title will be used — but this is often inaccurate on share‑links.
 
 ⭐ Output Directory
 All exports are saved to:
-C:\CopilotExports
 
+text
+C:\CopilotExports
 This avoids OneDrive virtualization issues and ensures files appear immediately.
 
 ⭐ Output Format
 TXT
+text
 You said
 Hello Copilot
 
 Copilot said
 Hi, how can I help today?
-
 Markdown
+markdown
 ### You
 Hello Copilot
 
 ### Copilot
 Hi, how can I help today?
-
 ⭐ Limitations
 Must run Edge in debugging mode
 
@@ -121,9 +125,8 @@ Manual naming recommended
 
 ⭐ Troubleshooting
 Playwright not found
-
+text
 ModuleNotFoundError: No module named 'playwright'
-
 Use the Python installation that has Playwright installed.
 
 Extractor cannot find the Copilot tab
@@ -134,8 +137,9 @@ Use the manual naming prompt.
 
 Smart App Control (SAC) blocks DLLs
 If you see:
-ImportError: DLL load failed while importing _greenlet
 
+text
+ImportError: DLL load failed while importing _greenlet
 Disable Smart App Control:
 
 Windows Security → App & Browser Control → Smart App Control → Off
@@ -144,15 +148,10 @@ Restart your PC.
 
 ⭐ Why Edge?
 Copilot runs inside Edge’s WebView2 environment.
-
 Using Edge with CDP ensures:
-
 stable access to the chat container
-
 consistent DOM structure
-
 predictable hydration behavior
-
 reliable infinite scroll handling
 
 Chrome or other browsers will not work.
@@ -161,13 +160,9 @@ Chrome or other browsers will not work.
 These items are planned for future releases:
 
 📘 Changelog
-
 🤝 Contributing Guide
-
 🧭 Roadmap
-
 🎨 Project Logo
-
 🧩 Architecture Diagram
 
 These will be introduced gradually starting with v1.2.0.
@@ -197,9 +192,11 @@ your institutional memory
 
 your long‑term AI workflow
 
-⭐ Roadmap (v1.3.0)
+⭐ Roadmap (v1.2.0)
 JSON export
 HTML export
 Automatic chat title detection
+
 Multi-chat batch export
+
 GUI wrapper
