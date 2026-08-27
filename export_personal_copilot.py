@@ -11,6 +11,10 @@ CDP_URL = "http://localhost:9222"
 BASE_OUTPUT_ROOT = r"C:\CopilotExports"
 
 
+# ============================================================
+# Utility Helpers
+# ============================================================
+
 def hash_message(role, text):
     return hashlib.sha256((role + text).encode("utf-8")).hexdigest()
 
@@ -28,32 +32,37 @@ def ensure_output_root():
         os.makedirs(BASE_OUTPUT_ROOT, exist_ok=True)
 
 
-def pick_tab(browser):
-    pages = []
+# ============================================================
+# V2: Multi‑Chat Tab Detection
+# ============================================================
+
+def get_all_copilot_tabs(browser):
+    """Return all tabs that contain Copilot chat URLs."""
+    tabs = []
     for ctx in browser.contexts:
         for p in ctx.pages:
-            pages.append(p)
-
-    if not pages:
-        raise RuntimeError("No tabs found. Open Copilot inside the debugging Edge window first.")
-
-    print("\nAvailable tabs:")
-    for i, p in enumerate(pages):
-        print(f"[{i}] {p.url}")
-
-    choice = input("\nEnter the number of the tab you want to use: ").strip()
-    idx = int(choice)
-    return pages[idx]
+            if "copilot.microsoft.com/chats" in p.url:
+                tabs.append(p)
+    return tabs
 
 
-def connect_to_edge():
-    pw = sync_playwright().start()
-    browser = pw.chromium.connect_over_cdp(CDP_URL)
-    page = pick_tab(browser)
+def auto_folder_name_from_title(raw_title):
+    """Auto-name folders using Option D: <ChatTitle> <YYYY-MM-DD>"""
+    base = sanitize_filename(raw_title)
+    date_str = datetime.utcnow().date().isoformat()
+    return f"{base} {date_str}"
 
-    print(f"\nSelected tab: {page.url}\n")
-    return pw, browser, page
 
+def auto_file_prefix_from_title(raw_title):
+    """Auto file prefix: <ChatTitle>-<YYYYMMDD>"""
+    base = sanitize_filename(raw_title)
+    date_str = datetime.utcnow().strftime("%Y%m%d")
+    return f"{base}-{date_str}"
+
+
+# ============================================================
+# DOM Helpers
+# ============================================================
 
 def find_chat_container(page):
     js = """
@@ -128,13 +137,13 @@ def extract_visible_messages(page):
     })();
     """
     return page.evaluate(js)
-def super_scroll_to_top(page, container, pause=1.2, max_rounds=200):
-    """
-    Aggressively scrolls to the very top of the Copilot chat to force full hydration.
-    This is required because Copilot only loads older messages when the user scrolls
-    far enough manually. Playwright must simulate that behavior.
-    """
 
+
+# ============================================================
+# Hydration Pipeline
+# ============================================================
+
+def super_scroll_to_top(page, container, pause=1.2, max_rounds=200):
     print("\n[Phase 1] Aggressive pre-scroll to top...")
 
     last_height = None
@@ -143,7 +152,6 @@ def super_scroll_to_top(page, container, pause=1.2, max_rounds=200):
 
     for i in range(max_rounds):
 
-        # Scroll container aggressively upward
         page.evaluate(
             """
             (container) => {
@@ -155,12 +163,9 @@ def super_scroll_to_top(page, container, pause=1.2, max_rounds=200):
             container
         )
 
-        # Also scroll the page itself (nested scroll fallback)
         page.evaluate("window.scrollBy(0, -5000)")
-
         time.sleep(pause)
 
-        # Check hydration by comparing scrollHeight
         current_height = page.evaluate("(c) => c.scrollHeight", container)
 
         if current_height == last_height:
@@ -172,7 +177,6 @@ def super_scroll_to_top(page, container, pause=1.2, max_rounds=200):
 
         print(f"[SuperScroll {i}] Height={current_height} | Stable={stable_rounds}")
 
-        # Stop when hydration stops AND scrollTop is at the top
         at_top = page.evaluate("(c) => c.scrollTop === 0", container)
         if at_top and stable_rounds >= MAX_STABLE:
             print("[Phase 1] Reached top of thread. Hydration complete.")
@@ -190,7 +194,6 @@ def hybrid_scroll_and_collect(page, container, pause=1.2, max_iterations=2000):
     stable_rounds = 0
     MAX_STABLE_ROUNDS = 10
 
-    # Start at bottom of chat
     page.evaluate(
         """
         (container) => {
@@ -221,7 +224,6 @@ def hybrid_scroll_and_collect(page, container, pause=1.2, max_iterations=2000):
 
         current_count = len(seen_hashes)
 
-        # Scroll up inside container
         scroll_top = page.evaluate(
             """
             (container) => {
@@ -234,7 +236,6 @@ def hybrid_scroll_and_collect(page, container, pause=1.2, max_iterations=2000):
             container
         )
 
-        # Also scroll page slightly (in case of nested scroll)
         page.evaluate("window.scrollBy(0, -800)")
 
         if scroll_top is None:
@@ -264,7 +265,6 @@ def hybrid_scroll_and_collect(page, container, pause=1.2, max_iterations=2000):
         if i % 10 == 0:
             print(f"[Pass {i}] Messages: {current_count} | Height: {current_height} | Stable rounds: {stable_rounds}")
 
-        # Safety: if we've scrolled to top and nothing changes, stop
         at_top = page.evaluate("(c) => c.scrollTop === 0", container)
         if at_top and stable_rounds >= MAX_STABLE_ROUNDS:
             print("Container at top and stable — stopping.")
@@ -274,78 +274,9 @@ def hybrid_scroll_and_collect(page, container, pause=1.2, max_iterations=2000):
     return json_buffer
 
 
-def select_chunk_size():
-    print("\nChunking Mode:")
-    print("1. Large  (5000 words)")
-    print("2. Mid    (2500 words)")
-    print("3. Normal (1000 words)")
-    print("4. Tiny   (500 words)")
-    print("5. Custom (enter any number)")
-
-    choice = input("Select chunking mode (1-5): ").strip()
-
-    if choice == "1":
-        return 5000
-    elif choice == "2":
-        return 2500
-    elif choice == "3":
-        return 1000
-    elif choice == "4":
-        return 500
-    elif choice == "5":
-        val = input("Enter custom chunk size (words per file): ").strip()
-        try:
-            n = int(val)
-            if n <= 0:
-                raise ValueError
-            return n
-        except:
-            print("Invalid custom value, defaulting to 1000 words.")
-            return 1000
-    else:
-        print("Invalid choice, defaulting to Normal (1000 words).")
-        return 1000
-
-
-def select_folder_name(chat_title):
-    print("\nFolder Naming Mode:")
-    print("1. Manual Entry")
-    print("2. Auto (Chat Title)")
-    print("3. Prefix + Date")
-    print("4. Prefix + 'Full Thread'")
-    print("5. Custom Rule (prefix + chat title + date)")
-
-    choice = input("Select folder naming mode (1-5): ").strip()
-
-    if choice == "1":
-        name = input("Enter folder name: ").strip()
-        return sanitize_filename(name) or sanitize_filename(chat_title)
-
-    elif choice == "2":
-        return sanitize_filename(chat_title)
-
-    elif choice == "3":
-        prefix = input("Enter prefix: ").strip()
-        prefix = sanitize_filename(prefix) or "copilot_chat"
-        date_str = datetime.utcnow().date().isoformat()
-        return f"{prefix} {date_str}"
-
-    elif choice == "4":
-        prefix = input("Enter prefix: ").strip()
-        prefix = sanitize_filename(prefix) or "copilot_chat"
-        return f"{prefix} - Full Thread"
-
-    elif choice == "5":
-        prefix = input("Enter prefix: ").strip()
-        prefix = sanitize_filename(prefix) or "copilot_chat"
-        date_str = datetime.utcnow().date().isoformat()
-        base = sanitize_filename(chat_title)
-        return f"{prefix} - {base} - {date_str}"
-
-    else:
-        print("Invalid choice, defaulting to Auto (Chat Title).")
-        return sanitize_filename(chat_title)
-
+# ============================================================
+# Chunking + File Writing
+# ============================================================
 
 def build_frontmatter(file_title, dates_covered, source_url):
     dates_yaml = "\n  - ".join(dates_covered) if dates_covered else ""
@@ -414,7 +345,6 @@ def segment_and_write_files(json_buffer, chunk_size_words, folder_path, file_pre
                     header = "### Copilot"
                 elif "You" in role:
                     header = "### You"
-                    md.write(header + "\n\n")
                 else:
                     header = f"### {role}"
 
@@ -430,43 +360,68 @@ def segment_and_write_files(json_buffer, chunk_size_words, folder_path, file_pre
         print(f"Wrote chunk {file_index}: {filename_md}")
 
 
+# ============================================================
+# V2 MAIN — Multi‑Chat Batch Export (Option D)
+# ============================================================
+
 def main():
     print("Working directory:", os.getcwd())
     print("Connecting to Edge at", CDP_URL)
 
     ensure_output_root()
 
-    pw, browser, page = connect_to_edge()
+    pw = sync_playwright().start()
+    browser = pw.chromium.connect_over_cdp(CDP_URL)
 
-    raw_title = page.evaluate("""
-        () => {
-            const selectors = [
-                '[data-testid="chat-title"]',
-                'h1',
-                'div[class*="title"]',
-                'span[class*="title"]'
-            ];
-            for (const sel of selectors) {
-                const el = document.querySelector(sel);
-                if (el && el.innerText) return el.innerText.trim();
+    # ---------------------------
+    # Detect ALL Copilot chats
+    # ---------------------------
+    copilot_tabs = get_all_copilot_tabs(browser)
+
+    if not copilot_tabs:
+        pw.stop()
+        raise RuntimeError("No Copilot chats found. Open Copilot inside the debugging Edge window first.")
+
+    print(f"\nDetected {len(copilot_tabs)} Copilot chat tabs.")
+    print("Beginning batch export...\n")
+
+    for idx, page in enumerate(copilot_tabs, start=1):
+        print("=" * 80)
+        print(f"[Chat {idx}/{len(copilot_tabs)}] URL: {page.url}")
+        print("=" * 80)
+
+        # ---------------------------
+        # Auto-detect chat title
+        # ---------------------------
+        raw_title = page.evaluate("""
+            () => {
+                const selectors = [
+                    '[data-testid="chat-title"]',
+                    'h1',
+                    'div[class*="title"]',
+                    'span[class*="title"]'
+                ];
+                for (const sel of selectors) {
+                    const el = document.querySelector(sel);
+                    if (el && el.innerText) return el.innerText.trim();
+                }
+                return document.title;
             }
-            return document.title;
-        }
-    """)
+        """)
 
-    suggested_title = sanitize_filename(raw_title)
-    print(f"Detected chat title (may be inaccurate on share pages): {suggested_title}")
+        chat_title = sanitize_filename(raw_title)
+        folder_name = auto_folder_name_from_title(chat_title)
+        file_prefix = auto_file_prefix_from_title(chat_title)
 
-    override = input("Enter a custom name for this chat (recommended): ").strip()
-    chat_title = sanitize_filename(override) if override else suggested_title
+        folder_path = os.path.join(BASE_OUTPUT_ROOT, folder_name)
+        os.makedirs(folder_path, exist_ok=True)
 
-    folder_name = select_folder_name(chat_title)
-    folder_path = os.path.join(BASE_OUTPUT_ROOT, folder_name)
-    os.makedirs(folder_path, exist_ok=True)
+        print(f"Auto folder name: {folder_name}")
+        print(f"Auto file prefix: {file_prefix}\n")
 
-    chunk_size_words = select_chunk_size()
-
-    try:
+        # ---------------------------
+        # Hydrate + extract
+        # ---------------------------
         print("Locating chat container...")
         container = find_chat_container(page)
 
@@ -477,11 +432,11 @@ def main():
         json_buffer = hybrid_scroll_and_collect(page, container)
 
         print(f"\nTotal messages collected: {len(json_buffer)}")
-
-        file_prefix_input = input("Enter file prefix (e.g., 'PA-Atmosphere'): ").strip()
-        file_prefix = sanitize_filename(file_prefix_input) or chat_title
-
         print("Segmenting into multi-file export...")
+
+        # Fixed chunk size for v2 (2500 words)
+        chunk_size_words = 2500
+
         segment_and_write_files(
             json_buffer=json_buffer,
             chunk_size_words=chunk_size_words,
@@ -490,11 +445,11 @@ def main():
             source_url=page.url,
         )
 
-        print("\nExport complete.")
-        print(f"Folder: {folder_path}")
+        print(f"\nExport complete for chat: {chat_title}")
+        print(f"Folder: {folder_path}\n")
 
-    finally:
-        pw.stop()
+    print("\nAll chats exported successfully.")
+    pw.stop()
 
 
 if __name__ == "__main__":
