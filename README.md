@@ -297,5 +297,56 @@ Pipeline:
 
 This fixes partial exports on long Copilot conversations and requires no manual scrolling.
 
+📁 Required Folder Structure
+Code
+C:\CopilotTools\
+    launch_edge_debug.ps1
+    run_exporter.ps1
+    copilot-chat-exporter\
+        venv\
+        export_personal_copilot.py
+        README.md
+        requirements.txt
+
+C:\CopilotExports\
+    <all exported chats>
+📥 Installation (Windows)
+Create C:\CopilotTools
+
+Download repo into C:\CopilotTools\copilot-chat-exporter
+
+Create venv:
+
+Code
+python -m venv venv
+.\venv\Scripts\activate
+pip install playwright
+playwright install
+Create launch_edge_debug.ps1 and run_exporter.ps1
+
+Launch Edge in CDP mode
+
+Run exporter
+
+🛠 Feature Requests
+Open an Issue on GitHub with:
+
+Title
+Description
+Desired behavior
+Example use case
+
+Labels:
+feature
+enhancement
+v2
+v3
+
+🚀 Roadmap
+v2 — Multi‑chat batch export
+v3 — JSON + HTML export
+v4 — Memory‑ready schema
+v5 — GUI wrapper
+v6 — Multi‑source ingestion (Copilot + Grok + Linear + Obsidian)
 
 
