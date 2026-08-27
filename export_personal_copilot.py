@@ -128,6 +128,57 @@ def extract_visible_messages(page):
     })();
     """
     return page.evaluate(js)
+def super_scroll_to_top(page, container, pause=1.2, max_rounds=200):
+    """
+    Aggressively scrolls to the very top of the Copilot chat to force full hydration.
+    This is required because Copilot only loads older messages when the user scrolls
+    far enough manually. Playwright must simulate that behavior.
+    """
+
+    print("\n[Phase 1] Aggressive pre-scroll to top...")
+
+    last_height = None
+    stable_rounds = 0
+    MAX_STABLE = 15
+
+    for i in range(max_rounds):
+
+        # Scroll container aggressively upward
+        page.evaluate(
+            """
+            (container) => {
+                if (!container) return;
+                container.scrollTop = container.scrollTop - 5000;
+                if (container.scrollTop < 0) container.scrollTop = 0;
+            }
+            """,
+            container
+        )
+
+        # Also scroll the page itself (nested scroll fallback)
+        page.evaluate("window.scrollBy(0, -5000)")
+
+        time.sleep(pause)
+
+        # Check hydration by comparing scrollHeight
+        current_height = page.evaluate("(c) => c.scrollHeight", container)
+
+        if current_height == last_height:
+            stable_rounds += 1
+        else:
+            stable_rounds = 0
+
+        last_height = current_height
+
+        print(f"[SuperScroll {i}] Height={current_height} | Stable={stable_rounds}")
+
+        # Stop when hydration stops AND scrollTop is at the top
+        at_top = page.evaluate("(c) => c.scrollTop === 0", container)
+        if at_top and stable_rounds >= MAX_STABLE:
+            print("[Phase 1] Reached top of thread. Hydration complete.")
+            break
+
+    print("[Phase 1] Super-scroll complete.\n")
 
 
 def hybrid_scroll_and_collect(page, container, pause=1.2, max_iterations=2000):
@@ -418,6 +469,9 @@ def main():
     try:
         print("Locating chat container...")
         container = find_chat_container(page)
+
+        print("Beginning aggressive pre-scroll to hydrate full thread...")
+        super_scroll_to_top(page, container)
 
         print("Beginning hybrid scroll + extraction (full thread)...")
         json_buffer = hybrid_scroll_and_collect(page, container)
